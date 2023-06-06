@@ -1,0 +1,15 @@
+---
+- name: Create .ssh directory
+  file: path=/root/.ssh state=directory
+
+- name: Copy id_rsa
+  copy:
+    src: "~/.ssh/id_rsa"
+    dest: "/root/.ssh/id_rsa"
+    mode: 0400
+
+- name: Disable sudo password
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: '^%sudo   ALL=(ALL:ALL) ALL$'
+    line: '%sudo   ALL=(ALL:ALL) NOPASSWD:ALL'

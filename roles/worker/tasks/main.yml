@@ -1,0 +1,8 @@
+---
+- name: Join cluster
+  shell: "{{ hostvars['K8S_HOLDER']['command'] }}"
+
+- name: Change Kubelet readonly port
+  lineinfile:
+    path: /var/lib/kubelet/config.yaml
+    line: 'readOnlyPort: 10255'

@@ -1,0 +1,52 @@
+---
+- name: Add gpg key
+  shell:  "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg"
+
+- name: Add docker repository
+  shell: 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list'
+
+- name: Install containerd
+  apt:
+    name: containerd.io
+    state: present
+    update_cache: yes
+
+- name: Start containerd
+  systemd:
+    state: started
+    name: containerd
+
+- name: Enable containerd
+  systemd:
+    name: containerd
+    enabled: yes
+
+- name: Copy config.toml
+  copy:
+    src: "{{ role_path }}/files/config.toml"
+    dest: /etc/containerd/config.toml
+
+- name: Create CNI directory
+  ansible.builtin.file:
+    path: /opt/cni/bin/
+    state: directory
+    mode: '0755'
+
+- name: Download cni plugins
+  ansible.builtin.get_url:
+    url: https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
+    dest: /tmp/cni-plugins-linux-amd64-v1.1.1.tgz
+    mode: '0644'
+
+- name: Extract foo.tgz into /var/lib/foo
+  ansible.builtin.unarchive:
+    src: /tmp/cni-plugins-linux-amd64-v1.1.1.tgz
+    dest: /opt/cni/bin/
+    remote_src: yes
+
+- name: Restart containerd
+  systemd:
+    state: restarted
+    name: containerd
+
+

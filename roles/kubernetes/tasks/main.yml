@@ -1,0 +1,41 @@
+---
+- name: Add br_netfilter
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Enable ip_forward
+  ansible.builtin.lineinfile:
+    path: /etc/sysctl.conf
+    line: net.ipv4.ip_forward = 1
+    create: yes
+
+- name: sysctl -p
+  command: sysctl -p
+
+- name: Add gpg key
+  shell: "curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -"
+
+- name: Add kubernetes repo
+  shell: 'echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list'
+
+- name: Install kubelet, kubeadm, kubectl
+  apt:
+    name: "{{ packages }}"
+    update_cache: yes
+    state: present
+  vars:
+    packages:
+    - "kubelet"
+    - "kubeadm"
+    - "kubectl"
+
+- name: Start kubelet
+  systemd:
+    state: started
+    name: kubelet
+
+- name: Enable kubelet
+  systemd:
+    name: kubelet
+    enabled: yes

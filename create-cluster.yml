@@ -1,0 +1,62 @@
+---
+- name: Install docker, kubernetes and additional programs
+  hosts: [masters,workers]
+  become: yes
+  become_method: sudo
+  roles:
+    - swap
+    - ntp
+    - ssh-key
+    - docker
+    - kubernetes
+
+- name: Create etcd cluster
+  hosts: masters[0]
+  become: yes
+  become_method: sudo
+  roles:
+    - etcd-init
+
+- name: Add node to etcd cluster
+  hosts: masters[1:]
+  become: yes
+  become_method: sudo
+  roles:
+    - etcd
+
+- name: Init cluster
+  hosts: masters[0]
+  become: yes
+  become_method: sudo
+  roles:
+    - master-init
+
+- name: Get token
+  hosts: masters[0]
+  become: yes
+  become_method: sudo
+  roles:
+    - get-token
+
+- name: Add masters to cluster
+  hosts: masters[1:]
+  become: yes
+  become_method: sudo
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  roles:
+    - master
+
+- name: Install network plugin
+  hosts: masters[0]
+  become: yes
+  become_method: sudo
+  roles:
+    - network
+
+- name: Add workes to cluster
+  hosts: workers
+  become: yes
+  become_method: sudo
+  roles:
+    - worker

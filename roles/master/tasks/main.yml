@@ -1,0 +1,63 @@
+---
+- name: Transfer ca.pem
+  synchronize:
+    src: /etc/ssl/certs/ca.pem
+    dest: /etc/ssl/certs/ca.pem
+  delegate_to: "{{ groups.masters | first }}"
+
+- name: Create pki directory
+  file: path=/etc/kubernetes/pki state=directory
+
+- name: Transfer ca.crt
+  synchronize:
+    src: /etc/kubernetes/pki/ca.crt
+    dest: /etc/kubernetes/pki/ca.crt
+  delegate_to: "{{ groups.masters | first }}"
+
+- name: Transfer ca.key
+  synchronize:
+    src: /etc/kubernetes/pki/ca.key
+    dest: /etc/kubernetes/pki/ca.key
+  delegate_to: "{{ groups.masters | first }}"
+
+- name: Transfer sa.pub
+  synchronize:
+    src: /etc/kubernetes/pki/sa.pub
+    dest: /etc/kubernetes/pki/sa.pub
+  delegate_to: "{{ groups.masters | first }}"
+
+- name: Transfer sa.key
+  synchronize:
+    src: /etc/kubernetes/pki/sa.key
+    dest: /etc/kubernetes/pki/sa.key
+  delegate_to: "{{ groups.masters | first }}"
+
+- name: Transfer front-proxy-ca.crt
+  synchronize:
+    src: /etc/kubernetes/pki/front-proxy-ca.crt
+    dest: /etc/kubernetes/pki/front-proxy-ca.crt
+  delegate_to: "{{ groups.masters | first }}"
+
+- name: Transfer front-proxy-ca.key
+  synchronize:
+    src: /etc/kubernetes/pki/front-proxy-ca.key
+    dest: /etc/kubernetes/pki/front-proxy-ca.key
+  delegate_to: "{{ groups.masters | first }}"
+
+- name: Join cluster
+  shell: "{{ hostvars['K8S_HOLDER']['command'] }} --control-plane"
+
+- name: Create kube directory
+  file:
+    path: "/root/.kube"
+    state: directory
+    owner: "root"
+    group: "root"
+
+- name: copy admin.conf file
+  command: "cp /etc/kubernetes/admin.conf /root/.kube/config"
+
+- file:
+    path: "/root/.kube/config"
+    owner: "root"
+    group: "root"
